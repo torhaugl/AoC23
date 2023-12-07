@@ -75,25 +75,27 @@ end
 function get_hand_value_v2(cards)
     A = [cards2num_v2[c] for c in cards]
     x = Dict(i => count(==(i), A) for i in values(cards2num_v2))
+    nJ = x[1]
+    x[1] = 0
     y = Dict(i => count(==(i), values(x)) for i = 1:5)
-    if maximum(values(x)) + x[1] == 5
+    if maximum(values(x)) + nJ == 5
         return 5.0
-    elseif maximum(values(x)) + x[1] == 4
+    elseif maximum(values(x)) + nJ == 4
         return 4.0
-    elseif maximum(values(x)) + x[1] == 3
-        if x[1] == 2
+    elseif maximum(values(x)) + nJ == 3
+        if nJ == 2
             return 3.0
-        elseif x[1] == 1 && get(y, 2, 0) == 2
+        elseif nJ == 1 && get(y, 2, 0) == 2
             return 3.5
-        elseif x[1] == 1 && get(y, 2, 0) == 1
+        elseif nJ == 1 && get(y, 2, 0) == 1
             return 3.0
         elseif get(y, 2, 0) == 1
             return 3.5
         else
             return 3.0
         end
-    elseif maximum(values(x)) + x[1] == 2
-        if x[1] > 0
+    elseif maximum(values(x)) + nJ == 2
+        if nJ > 0
             return 2.0
         elseif get(y, 2, 0) == 2
             return 2.5
