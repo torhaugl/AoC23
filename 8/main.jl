@@ -1,29 +1,32 @@
-function parse_input(fname)
-    instructions, map = open(fname) do io
-        instructions = readline(io)
-        map = Dict{String, Tuple{String, String}}()
-        _ = readline(io)
-        for line in readlines(io)
+using Primes
+
+function readInstructionsAndMapFromFile(filename)
+    instructionLine, conversionMap = open(filename) do file
+        instructionLine = readline(file)
+        conversionMap = Dict{String, Tuple{String, String}}()
+
+        _ = readline(file)  # Skip a line
+        for line in readlines(file)
             pattern = r"^([A-Z0-9]{3}) = \(([A-Z0-9]{3}), ([A-Z0-9]{3})\)$"
-            a, b, c = match(pattern, line).captures
-            map[a] = (b, c)
+            key, val1, val2 = match(pattern, line).captures
+            conversionMap[key] = (val1, val2)
         end
-        return instructions, map
+        return instructionLine, conversionMap
     end
-    return instructions, map
+    return instructionLine, conversionMap
 end
 
 function part1()
-    instructions, map = parse_input("8/input")
+    instructions, map = readInstructionsAndMapFromFile("8/input")
     N = length(instructions)
     i = 0
     cnt = 0
-    curr = "AAA"
+    curr = "DXA"
     while true
         cnt += 1
         lr = (instructions[i+1] == 'R') + 1
         curr = map[curr][lr]
-        if curr == "ZZZ"
+        if curr[3] == 'Z' #"ZZZ"
             break
         end
         i = (i+1) % N
@@ -53,37 +56,60 @@ end
 #    x = 
 # end
 
-function part2()
-    instructions, map = parse_input("8/input")
-
+function find_loop(start, instructions, map)
     N = length(instructions)
     i = 0
     cnt = 0
-    starts = [x for x in keys(map) if x[3] == 'A']
-    explored = [(-1, "ABC")]
-    println("INSTRUCTIONS: $instructions")
-    @show starts
-    while true
-        node = (i, starts[1])
+    explored = Tuple{Int64, String}[]
+
+    pathOffset, pathLength, goalIndex = while true
+        node = (i, start)
         if (node in explored)
-            println("Found loop")
             index = findfirst(==(node), explored)
-            offset = length(explored[1:index-1])
             path = explored[index:end]
-            @show index
-            @show offset
-            @show length(path)
-            z_index = Int[]
+            pathLength = length(path)
+            pathOffset = length(explored[1:index-1])
+            goalIndex = 0
             for (j, n) in enumerate(path)
                 if n[2][3] == 'Z'
-                    push!(z_index, j)
+                    goalIndex = j
                 end
             end
-            @show z_index
+            return pathOffset, pathLength, goalIndex
             break
         else
             push!(explored, node)
         end
+        cnt += 1
+        lr = (instructions[i+1] == 'R') + 1
+        start = map[start][lr]
+        i = (i+1) % N
+    end
+
+    return pathOffset, pathLength, goalIndex
+end
+
+function part2()
+    instructions, map = readInstructionsAndMapFromFile("8/input")
+    starts = [x for x in keys(map) if x[3] == 'A']
+
+    nums = Int[]
+    for start in starts
+        _, pathLength, _ = find_loop(start, instructions, map)
+        push!(nums, pathLength)
+    end
+    primes = [factor(Vector, num) for num in nums]
+    common_primes = reduce(union, primes)
+    return prod(common_primes)
+end
+
+function part2_iterate(k)
+    instructions, map = readInstructionsAndMapFromFile("8/input")
+    N = length(instructions)
+    i = 0
+    cnt = 0
+    starts = [x for x in keys(map) if x[3] == 'A'][1:k]
+    while true
         cnt += 1
         lr = (instructions[i+1] == 'R') + 1
         goal = iterate!(starts, map, lr)
@@ -97,3 +123,9 @@ end
 
 @show part1()
 @show part2()
+
+# Naive and slow, but working implementation
+#@show part2_iterate(1)
+#@show part2_iterate(2)
+#@show part2_iterate(3)
+#@show part2_iterate(4)
