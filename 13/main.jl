@@ -65,7 +65,6 @@ function part1()
     for matrix in matrices
         sv = find_vertical_reflection(matrix)
         sh = find_horizontal_reflection(matrix)
-        @show (i, sv, sh)
         score += sh + 100 * sv
     end
     score
