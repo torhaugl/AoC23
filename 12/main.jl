@@ -1,3 +1,5 @@
+using Memoize
+
 function parse_line(line)
     onsen, nums_str = split(line)
     onsen = string(onsen)
@@ -38,17 +40,7 @@ function count_arrangements_naive(onsen, nums)
     sum(valid)
 end
 
-function count_arrangements(spring_conditions, group_sizes)#, memo)
-    #memo_key = (spring_conditions, group_sizes)
-    #if memo_key in keys(memo)
-    #    return memo[memo_key]
-    #end
-    #@show spring_conditions, group_sizes
-
-    #if 0 in group_sizes
-        #println("WARNING zero found")
-    #end
-
+function count_arrangements(spring_conditions, group_sizes)
     # Screening
     if isempty(group_sizes)
         if occursin("#", spring_conditions)
@@ -126,7 +118,70 @@ function count_arrangements(spring_conditions, group_sizes)#, memo)
     println("Error end")
 end
 
-using Memoize
+function count_arrangements_v4(spring_conditions, group_sizes)
+    # Screening
+    if isempty(group_sizes)
+        if occursin("#", spring_conditions)
+            return 0
+        else
+            return 1
+        end
+    end
+
+    possible = length(spring_conditions) - count(==('.'), spring_conditions)
+    if sum(group_sizes) > possible
+        return 0
+    end
+
+    current = count(==('#'), spring_conditions)
+    if current > sum(group_sizes)
+        return 0
+    end
+
+    if sum(group_sizes) + length(group_sizes) - 1 > length(spring_conditions)
+        return 0
+    end
+
+    if spring_conditions == ""
+        return 0
+    end
+
+    # Main loop
+    if spring_conditions[1] == '.'
+        return count_arrangements_v4(spring_conditions[2:end], group_sizes)
+    elseif spring_conditions[1] == '#'
+        n = group_sizes[1]
+        if length(spring_conditions) == n
+            stop = occursin('.', spring_conditions[1:n])
+        else
+            stop = occursin('.', spring_conditions[1:n]) || (spring_conditions[n+1] == '#')
+        end
+        if stop
+            return 0
+        end
+        if length(spring_conditions) < n+2
+            new = ""
+        else
+            new = spring_conditions[n+2:end]
+        end
+        if length(group_sizes) < 2
+            new_group = []
+        else
+            new_group = group_sizes[2:end]
+        end
+        return count_arrangements_v4(new, new_group)
+    elseif spring_conditions[1] == '?'
+        new_condition1 = '.' * spring_conditions[2:end]
+        new_condition2 = '#' * spring_conditions[2:end]
+        a = count_arrangements_v4(new_condition1, group_sizes)
+        a += count_arrangements_v4(new_condition2, group_sizes)
+        return a
+    else
+        println("Error spring")
+    end
+
+    println("Error end")
+end
 
 @memoize function count_arrangements_v2(spring_conditions, group_sizes)
     # Screening
@@ -158,7 +213,86 @@ using Memoize
 
     # Main loop
     if spring_conditions[1] == '.'
-        return count_arrangements(spring_conditions[2:end], group_sizes)
+        return count_arrangements_v2(spring_conditions[2:end], group_sizes)
+    elseif spring_conditions[1] == '#'
+        n = group_sizes[1]
+        if length(spring_conditions) == n
+            stop = occursin('.', spring_conditions[1:n])
+        else
+            stop = occursin('.', spring_conditions[1:n]) || (spring_conditions[n+1] == '#')
+        end
+        if stop
+            return 0
+        end
+        if length(spring_conditions) < n+2
+            new = ""
+        else
+            new = spring_conditions[n+2:end]
+        end
+        if length(group_sizes) < 2
+            new_group = []
+        else
+            new_group = group_sizes[2:end]
+        end
+        return count_arrangements_v2(new, new_group)
+    elseif spring_conditions[1] == '?'
+        new_condition1 = '.' * spring_conditions[2:end]
+        new_condition2 = '#' * spring_conditions[2:end]
+        a = count_arrangements_v2(new_condition1, group_sizes)
+        a += count_arrangements_v2(new_condition2, group_sizes)
+        return a
+    else
+        println("Error spring")
+    end
+
+    println("Error end")
+end
+
+@memoize function count_arrangements_v3(spring_conditions, group_sizes)
+    # Screening
+    if isempty(group_sizes)
+        if occursin("#", spring_conditions)
+            return 0
+        else
+            return 1
+        end
+    end
+
+    possible = length(spring_conditions) - count(==('.'), spring_conditions)
+    if sum(group_sizes) > possible
+        return 0
+    end
+
+    current = count(==('#'), spring_conditions)
+    if current > sum(group_sizes)
+        return 0
+    end
+
+    if sum(group_sizes) + length(group_sizes) - 1 > length(spring_conditions)
+        return 0
+    end
+
+    if spring_conditions == ""
+        return 0
+    end
+
+    if occursin('.', spring_conditions)
+        before, after = split(spring_conditions, '.', limit = 2)
+        s = 0
+        s += count_arrangements_v3(before, [])
+        s += count_arrangements_v3(after, [])
+        for i = 1:length(group_sizes)
+            s += count_arrangements_v3(spring_conditions, group_sizes[1:i])
+        end
+        for i = 1:length(group_sizes)-1
+            s += count_arrangements_v3(spring_conditions, group_sizes[i+1:end])
+        end
+        return s
+    end
+
+    # Main loop
+    if spring_conditions[1] == '.'
+        return count_arrangements_v3(spring_conditions[2:end], group_sizes)
     elseif spring_conditions[1] == '#'
         n = new_group[1]
         if length(spring_conditions == n)
@@ -179,12 +313,12 @@ using Memoize
         else
             new_group = group_sizes[2:end]
         end
-        return count_arrangements(new, new_group)
+        return count_arrangements_v3(new, new_group)
     elseif spring_conditions[1] == '?'
         new_condition1 = '.' * spring_conditions[2:end]
         new_condition2 = '#' * spring_conditions[2:end]
-        a = count_arrangements(new_condition1, group_sizes)
-        a += count_arrangements(new_condition2, group_sizes)
+        a = count_arrangements_v3(new_condition1, group_sizes)
+        a += count_arrangements_v3(new_condition2, group_sizes)
         return a
     else
         println("Error spring")
@@ -254,23 +388,25 @@ end
 #count_arrangements("#?", [1,1]) # 0
 #count_arrangements("??", [1,1]) # 0
 #
-count_arrangements("???", [1,1,1]) # 0
-count_arrangements("???", [1,2]) # 0
-count_arrangements("???", [2,1]) # 0
-count_arrangements("???", [1,1]) # 1
-count_arrangements("???", [3]) # 1
-count_arrangements("???", [2]) # 2
-count_arrangements("???", [1]) # 3
+count_arrangements_v2("???", [1,1,1]) # 0
+count_arrangements_v2("???", [1,2]) # 0
+count_arrangements_v2("???", [2,1]) # 0
+count_arrangements_v2("???", [1,1]) # 1
+count_arrangements_v2("???", [3]) # 1
+count_arrangements_v2("???", [2]) # 2
+count_arrangements_v2("???", [1]) # 3
 #
-#onsen = "?###????????"
-#nums = [3,2,1]
-#count_arrangements(onsen, nums)
-#count_arrangements_naive(onsen, nums)
+onsen = "?###????????"
+nums = [3,2,1]
+count_arrangements(onsen, nums)
+count_arrangements_naive(onsen, nums)
+count_arrangements_v2(onsen, nums)
 #
-#onsen = "???"
-#nums = [2]
-#count_arrangements(onsen, nums)
-#count_arrangements_naive(onsen, nums)
+onsen = "#.?"
+nums = [2]
+count_arrangements(onsen, nums)
+count_arrangements_naive(onsen, nums)
+count_arrangements_v2(onsen, nums)
 #
 #onsen = "#??"
 #nums = [2]
@@ -284,8 +420,11 @@ nums = [1, 1, 3, 1, 1, 3, 1, 1, 3]
 #onsen = "????????????????????????????????????????????????????????????????"
 onsen = "???????????????????????????????????????????????????"
 nums = repeat([3, 1, 1, 1], 4)
+#onsen = "????????????????????????????????"
+#nums = repeat([3, 1, 1, 1], 3)
 @time count_arrangements(onsen, nums)
 @time count_arrangements_v2(onsen, nums)
+@time count_arrangements_v4(onsen, nums)
 #count_arrangements_naive(onsen, nums)
 
 #onsen = "?.?"
