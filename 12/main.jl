@@ -1,5 +1,14 @@
 using Memoize
 
+"""
+Parse input line like 
+".??..??...?##. 1,1,3"
+to 
+(".??..??...?##.", (1, 1, 3))
+Here different chars indicate operational (.) or damaged (#) or unknown (?)
+condition on the hot spring (onsen). The numbers instead indicate number of
+onsen adjacent to each other.
+"""
 function parse_line(line)
     onsen, nums_str = split(line)
     onsen = string(onsen)
@@ -7,8 +16,11 @@ function parse_line(line)
     return onsen, nums
 end
 
+"""
+Validate 
+"""
 function validate(line, nums)
-    onsen_nums = split(line, '.') .|> length 
+    onsen_nums = split(line, '.') .|> length
     onsen = [x for x in onsen_nums if x != 0]
     return onsen == nums
 end
@@ -159,7 +171,7 @@ function count_arrangements_v4(spring_conditions, group_sizes)
         if stop
             return 0
         end
-        if length(spring_conditions) < n+2
+        if length(spring_conditions) < n + 2
             new = ""
         else
             new = spring_conditions[n+2:end]
@@ -224,7 +236,7 @@ end
         if stop
             return 0
         end
-        if length(spring_conditions) < n+2
+        if length(spring_conditions) < n + 2
             new = ""
         else
             new = spring_conditions[n+2:end]
@@ -277,7 +289,7 @@ end
     end
 
     if occursin('.', spring_conditions)
-        before, after = split(spring_conditions, '.', limit = 2)
+        before, after = split(spring_conditions, '.', limit=2)
         s = 0
         s += count_arrangements_v3(before, [])
         s += count_arrangements_v3(after, [])
@@ -303,7 +315,7 @@ end
         if stop
             return 0
         end
-        if length(spring_conditions) < n+2
+        if length(spring_conditions) < n + 2
             new = ""
         else
             new = spring_conditions[n+2:end]
@@ -388,16 +400,16 @@ end
 #count_arrangements("#?", [1,1]) # 0
 #count_arrangements("??", [1,1]) # 0
 #
-count_arrangements_v2("???", [1,1,1]) # 0
-count_arrangements_v2("???", [1,2]) # 0
-count_arrangements_v2("???", [2,1]) # 0
-count_arrangements_v2("???", [1,1]) # 1
+count_arrangements_v2("???", [1, 1, 1]) # 0
+count_arrangements_v2("???", [1, 2]) # 0
+count_arrangements_v2("???", [2, 1]) # 0
+count_arrangements_v2("???", [1, 1]) # 1
 count_arrangements_v2("???", [3]) # 1
 count_arrangements_v2("???", [2]) # 2
 count_arrangements_v2("???", [1]) # 3
 #
 onsen = "?###????????"
-nums = [3,2,1]
+nums = [3, 2, 1]
 count_arrangements(onsen, nums)
 count_arrangements_naive(onsen, nums)
 count_arrangements_v2(onsen, nums)
